@@ -1,4 +1,3 @@
-import sys
 import math
 
 class Heap(object):
@@ -7,8 +6,6 @@ class Heap(object):
 
     https://en.wikipedia.org/wiki/Heap_(data_structure)
     """
-
-
 
     def insert(self, value: int) -> None:
         """
@@ -40,21 +37,21 @@ class Heap(object):
         """
         pass
 
-class Node(object):
-    def __init__(self, value: int):
-        self.value = value
-        self.parent = None
-        self.child = None
-        self.left = self
-        self.right = self
-        self.degree = 0 # Degree of the node
-        self.mark = 'W'#  Black or white mark of the node
-        self.c = 'N' # Flag for assisting in the Find node function
 
+class Node:
+    def __init__(self, value):
+        self.children = []
+        self.value = value
+        self.order = 0
+
+    # Adding element at the end of the tree
+    def append(self, item):
+        self.children.append(item)
+        self.order += 1
 
 class FibonacciHeap(Heap):
     """
-    Une fibonnaci heap est un arbre permettant de stocker et trier des données efficacement
+    Une fibonnaci heap est un arbre permettant de stocker et trier des donnés efficacement
 
     https://en.wikipedia.org/wiki/Fibonacci_heap
 
@@ -62,191 +59,124 @@ class FibonacciHeap(Heap):
     et en français : https://fr.wikipedia.org/wiki/Tas_de_Fibonacci#Implémentation_des_opérations
     """
     def __init__(self):
-        # self.nodes = []
+        self.nodes = []
+        self.min_node = None
         self.size = 0
-        self.min = None
-
-    def insert(self, value: int) -> None:
-        """
-        Ajoute une valeur dans l'arbre
-        """
-        if not isinstance(value, int):
-            raise ValueError
-
-        try:
-            new_node = Node(value)
-            if self.min is None:
-                # first item is min ;)
-                self.min = new_node
-            else:
-                # insertion
-                (self.min.left).right = new_node
-                new_node.right = self.min
-                new_node.left = self.min.left
-                self.min.left = new_node
-                # min check
-                if (new_node.value < self.min.value):
-                    self.min = new_node
-
-            self.size += 1
-        except Exception :
-            print("ERROR: insert value ", sys.exc_info()[0])
-
-        pass
 
     def display(self):
         """
         Display Heap information
         """
-        current = self.min
-        if current is None:
-            print(" - Empty FibonacciHeap")
+        if self.min_node is None:
+            print(" - FibonacciHeap is empty")
         else:
-            print(" - FibonacciHeap has {:d} nodes, min is {:d}, root nodes are: ".format(  self.size,  self.find_min()), end='' )
-            while True:
-                print(current.value, end='')
-                current = current.right
-                if (current != self.min):
+            print(" - FibonacciHeap has {:d} nodes, min is {:d}, root nodes are: ".format(self.size, self.find_min()), end='')
+            index=1
+            # display root nodes values only
+            len = self.nodes.__len__()
+            for current_node in self.nodes:
+                print(current_node.value, end='')
+                if index < len:
                     print("-->", end='')
-                # end of while ?
-                if current == self.min or current.right is None:
-                    print("") # new line
-                    break
+                index += 1
+            print("") # end of line
 
 
+    def insert(self, value: int) -> None:
+        """
+        Ajoute une valeur dans l'arbre
+        """
+
+        # Check value type
+        if not isinstance(value, int):
+            raise ValueError
+
+        node = Node(value)
+        self.nodes.append(node)
+        self.size += 1
+
+        self.update_min(node)
+
+    def update_min(self, node):
+        """
+        Change self.min_node si node.value est plus petit
+        """
+        if (self.min_node is None or node.value < self.min_node.value):
+            self.min_node = node
 
 
     def find_min(self) -> int:
         """
         Retourne la valeur minimum dans l'arbre
         """
-        return self.min.value
+        return  None if self.min_node is None else self.min_node.value
 
-
-    # // Linking the heap nodes in parent child relationship
-    def Fibonnaci_link(self, ptr2: Node,  ptr1: Node):
-        ptr2.left.right = ptr2.right
-        ptr2.right.left = ptr2.left
-        if ptr1.right == ptr1:
-            self.min = ptr1
-        ptr2.left = ptr2
-        ptr2.right = ptr2
-        ptr2.parent = ptr1
-        if ptr1.child is None:
-            ptr1.child = ptr2
-        ptr2.right = ptr1.child
-        ptr2.left = ptr1.child.left
-        ptr1.child.left.right = ptr2
-        ptr1.child.left = ptr2
-        if ptr2.value < ptr1.child.value:
-            ptr1.child = ptr2
-        ptr1.degree+=1
-
-    # Consolidating the heap
-    def Consolidate(self):
-        # temp1
-        temp2 = math.log(self.size,2)
-        temp3 = math.floor(temp2)
-
-        arr = [None] * (temp3+1)
-
-        ptr1 = self.min
-        ptr2 = None
-        ptr3 = None
-        ptr4 = ptr1
-
-        while True:
-            ptr4 = ptr4.right
-            temp1 = ptr1.degree
-            while arr[temp1] is not None:
-                ptr2 = arr[temp1]
-                if ptr1.value > ptr2.value:
-                    # swap TODO ptr1, ptr2 = ptr2, ptr1
-                    ptr3 = ptr1
-                    ptr1 = ptr2
-                    ptr2 = ptr3
-
-                if ptr2 == self.min:
-                    self.min = ptr1
-
-                self.Fibonnaci_link(ptr2, ptr1)
-                if ptr1.right == ptr1:
-                    self.min = ptr1
-
-                arr[temp1] = None
-                temp1+=1 #end while
-
-            arr[temp1] = ptr1
-            ptr1 = ptr1.right
-            if ptr1 == self.min:
-                break # end while True
-
-        self.min = None
-        # TODO for arrj in arr
-        for j in range (0,  temp3):
-            if arr[j] is not None:
-                arr[j].left = arr[j]
-                arr[j].right = arr[j]
-                if self.min is not None:
-                    self.min.left.right = arr[j]
-                    arr[j].right = self.min
-                    arr[j].left = self.min.left
-                    self.min.left = arr[j]
-                    if arr[j].value < self.min.value:
-                        self.min = arr[j]
-                else:
-                    self.min = arr[j]
-
-                if self.min is None:
-                    self.min = arr[j]
-                elif arr[j].value < self.min.value:
-                        self.min = arr[j]
-
-    # extract_min
     def delete_min(self) -> int:
         """
         Supprime et retourne la valeur minimum dans l'arbre
         """
-        if self.min is None:
-            print(" - Empty FibonacciHeap")
+        if self.min_node is None:
             return None
 
+        min_to_delete = self.min_node
+        # before deleting, move children to trees structure
+        for child in min_to_delete.children:
+            self.nodes.append(child)
+        self.nodes.remove(min_to_delete)
 
-        result = self.min.value
-        temp = self.min
-        pntr = temp
-        x = None
-        if temp.child is not None:
-            x = temp.child
-            while True:
-                pntr = x.right
-                self.min.left.right = x
-                x.right = self.min
-                x.left = self.min.left
-                self.min.left = x
-                if x.value < self.min.value:
-                    self.min = x
-                x.parent = None
-                x = pntr
-                if pntr == temp.child:
-                    break
-
-        temp.left.right = temp.right
-        temp.right.left = temp.left
-        self.min = temp.right
-        if temp == temp.right and temp.child is None:
-            self.min = None
+        # use first item (if any) as new min
+        if self.nodes == []:
+            self.min_node = None
         else:
-            self.min = temp.right
-            self.Consolidate()
+            self.min_node = self.nodes[0]
+            # trees have changed, reorganize
+            self.consolidate()
 
         self.size -= 1
-        return result
+        return min_to_delete.value
 
 
+    # Consolidate the tree
+    def consolidate(self):
+        new_nodes = (math.frexp(self.size)[1] ) * [None]
 
-    def merge(self, fibonnaci_heap: Heap) -> None:
+        while self.nodes != []:
+            x = self.nodes[0]
+            order = x.order
+            self.nodes.remove(x)
+            while new_nodes[order] is not None:
+                y = new_nodes[order]
+                # swap if needed
+                if x.value > y.value:
+                    x, y = y, x
+                x.append(y)
+                new_nodes[order] = None
+                order += 1
+            new_nodes[order] = x
+
+        self.min_node = None
+        for new_node in new_nodes:
+            if new_node is not None:
+                self.nodes.append(new_node)
+                self.update_min(new_node)
+
+
+    def merge(self, fheap: Heap) -> None:
         """
         Fusionne deux arbres
         """
-        pass
+        if fheap is None:
+            return self
+
+        for node in fheap.nodes:
+            self.mergeNode(node)
+
+        # optionnaly we could do: self.consolidate()
+
+    def mergeNode(self, node: Node) -> None:
+        if node is None:
+            return self
+
+        self.insert(node.value)
+        for child in node.children:
+            self.mergeNode(child)
